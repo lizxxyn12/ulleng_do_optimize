@@ -141,25 +141,25 @@ def bar_row(
 ) -> str:
     """막대 그래프 행 HTML 생성."""
     return f"""
-      <div class="bar-row">
-        <div class="bar-label">
-          <div class="bar-label-wrap">
-            <span>{label}</span>
-            <span class="bar-sub">{sub_label}</span>
-            <span class="help-pop">
-              <span class="help-pop-btn">?</span>
-              <span class="help-pop-body">
-                {help_text}
-              </span>
-            </span>
-          </div>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill" style="width:{pct}%; background:{color};">
-            <div class="bar-value-onfill">{value:,}</div>
-          </div>
-        </div>
-      </div>
+<div class="bar-row">
+  <div class="bar-label">
+    <div class="bar-label-wrap">
+      <span>{label}</span>
+      <span class="bar-sub">{sub_label}</span>
+      <span class="help-pop">
+        <span class="help-pop-btn">?</span>
+        <span class="help-pop-body">
+          {help_text}
+        </span>
+      </span>
+    </div>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" style="width:{pct}%; background:{color};">
+      <div class="bar-value-onfill">{value:,}</div>
+    </div>
+  </div>
+</div>
     """
 
 
@@ -235,14 +235,14 @@ def sea_yearly_stats(
 
     return f"""
 <div class="r2-card">
-  <div class="sea-section">
-    <div class="sea-section-title">연간 통계 (2025년 기준)</div>
-    <div class="sea-bars">
-      {bars_html}
-    </div>
-  </div>
+<div class="sea-section">
+<div class="sea-section-title">연간 통계 (2025년 기준)</div>
+<div class="sea-bars">
+{bars_html}
 </div>
-    """
+</div>
+</div>
+"""
 
 
 # -----------------------------
