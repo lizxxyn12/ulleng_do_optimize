@@ -165,10 +165,18 @@ if "selected_acc_year" not in st.session_state:
     st.session_state["selected_acc_year"] = None
 if "selected_acc_idx" not in st.session_state:
     st.session_state["selected_acc_idx"] = None
+if "selected_acc_label" not in st.session_state:
+    st.session_state["selected_acc_label"] = None
+if "selected_acc_center" not in st.session_state:
+    st.session_state["selected_acc_center"] = None
 if "selected_rockfall_meta" not in st.session_state:
     st.session_state["selected_rockfall_meta"] = None
 if "selected_rockfall_photo_path" not in st.session_state:
     st.session_state["selected_rockfall_photo_path"] = None
+if "selected_rock_label" not in st.session_state:
+    st.session_state["selected_rock_label"] = None
+if "selected_rock_center" not in st.session_state:
+    st.session_state["selected_rock_center"] = None
 if "selected_bus_meta" not in st.session_state:
     st.session_state["selected_bus_meta"] = None
 if "rock_view_mode" not in st.session_state:
@@ -220,6 +228,7 @@ def _set_selected_accident(df_acc: pd.DataFrame, idx: int):
     detail_label = detail_txt if detail_txt else "(없음)"
     addr_label = addr if addr else "(없음)"
     summary = f"{detail_label} 인근, {acc_type} 발생. 주의 요망."
+    display_label = detail_txt if detail_txt else (addr if addr else "위치 정보 없음")
 
     # 6. 세션 상태 업데이트 (교통사고 정보 입력)
     st.session_state["selected_acc_meta"] = (
@@ -227,10 +236,13 @@ def _set_selected_accident(df_acc: pd.DataFrame, idx: int):
     )
     st.session_state["selected_acc_photo_path"] = str(photo) if photo else None
     st.session_state["selected_acc_year"] = year_val
+    st.session_state["selected_acc_label"] = display_label
 
     # [핵심] 낙석 및 버스 정보는 '반드시' 지워야 화면이 전환됨
     st.session_state["selected_rockfall_meta"] = None
     st.session_state["selected_rockfall_photo_path"] = None
+    st.session_state["selected_rock_label"] = None
+    st.session_state["selected_rock_center"] = None
     st.session_state["selected_bus_meta"] = None
 
 
@@ -931,6 +943,11 @@ with st.container(border=True):
                                     use_container_width=True,
                                 ):
                                     _set_selected_accident(df_acc_list, idx)
+                                    if pd.notna(lat) and pd.notna(lon):
+                                        st.session_state["selected_acc_center"] = (
+                                            float(lat),
+                                            float(lon),
+                                        )
                                     st.session_state["selected_acc_idx"] = int(idx)
                                     st.session_state["view_mode"] = "map"
                                     st.rerun()
@@ -979,10 +996,18 @@ with st.container(border=True):
                             year_filter,
                         )
 
+                    selected_acc_idx = st.session_state.get("selected_acc_idx")
+                    selected_acc_center = st.session_state.get("selected_acc_center")
+                    if selected_acc_idx is not None:
+                        st.caption(
+                            f"선택된 사고 위치: {st.session_state.get('selected_acc_label') or '정보 없음'}"
+                        )
                     map_state = render_ulleung_folium_map(
                         kind="accident",
                         height=MAP_H,
                         accident_year_filter=year_filter,
+                        highlight_idx=selected_acc_idx,
+                        center_override=selected_acc_center,
                     )
                     if isinstance(map_state, dict):
                         last = map_state.get("last_object_clicked")
@@ -1005,6 +1030,10 @@ with st.container(border=True):
                                 st.session_state["selected_bus_meta"] = None
                                 _set_selected_accident(df_acc, best_idx)
                                 st.session_state["selected_acc_idx"] = int(best_idx)
+                                st.session_state["selected_acc_center"] = (
+                                    float(df_acc.at[best_idx, "latitude"]),
+                                    float(df_acc.at[best_idx, "longitude"]),
+                                )
 
         with right_detail:
             _render_photo_detail_panel("accident")
@@ -1145,6 +1174,8 @@ with st.container(border=True):
                                     st.session_state["selected_acc_photo_path"] = (
                                         None
                                     )
+                                    st.session_state["selected_acc_label"] = None
+                                    st.session_state["selected_acc_center"] = None
                                     st.session_state["selected_bus_meta"] = None
                                     st.session_state["selected_rock_idx"] = item_idx
                                     st.session_state["selected_rockfall_meta"] = (
@@ -1153,12 +1184,26 @@ with st.container(border=True):
                                     st.session_state[
                                         "selected_rockfall_photo_path"
                                     ] = (str(photo) if photo else None)
+                                    st.session_state["selected_rock_label"] = name
+                                    if pd.notna(lat) and pd.notna(lon):
+                                        st.session_state["selected_rock_center"] = (
+                                            float(lat),
+                                            float(lon),
+                                        )
                                     st.session_state["rock_view_mode"] = "map"
                                     st.rerun()
             else:
+                selected_rock_idx = st.session_state.get("selected_rock_idx")
+                selected_rock_center = st.session_state.get("selected_rock_center")
+                if selected_rock_idx is not None:
+                    st.caption(
+                        f"선택된 낙석 위치: {st.session_state.get('selected_rock_label') or '정보 없음'}"
+                    )
                 rock_map_state = render_ulleung_folium_map(
                     kind="rockfall",
                     height=MAP_H,
+                    highlight_idx=selected_rock_idx,
+                    center_override=selected_rock_center,
                 )
                 if isinstance(rock_map_state, dict):
                     last = rock_map_state.get("last_object_clicked")
@@ -1184,6 +1229,8 @@ with st.container(border=True):
                             st.session_state["selected_acc_meta"] = None
                             st.session_state["selected_acc_photo_path"] = None
                             st.session_state["selected_acc_year"] = None
+                            st.session_state["selected_acc_label"] = None
+                            st.session_state["selected_acc_center"] = None
                             st.session_state["selected_bus_meta"] = None
                             name = best.get("name", "")
                             photo = best.get("photo", None)
@@ -1193,6 +1240,11 @@ with st.container(border=True):
                             )
                             st.session_state["selected_rockfall_photo_path"] = (
                                 str(photo) if photo else None
+                            )
+                            st.session_state["selected_rock_label"] = name
+                            st.session_state["selected_rock_center"] = (
+                                float(best.get("lat")),
+                                float(best.get("lon")),
                             )
 
         with right_detail:
